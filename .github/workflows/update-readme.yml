@@ -1,0 +1,43 @@
+name: Auto-update README
+# 此為工作流程的名稱
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  # 設定觸發器：當有新的提交被推送到 main 或 master 分支時觸發此工作流程
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    # 指定工作執行的環境
+    
+    permissions:
+      contents: write
+    # 賦予此工作寫入儲存庫內容的權限
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # 使用官方提供的 checkout action，將儲存庫程式碼複製到工作環境中
+
+      - name: Update README content
+        run: |
+          # 此處可以編寫任何你想要自動更新的內容
+          echo "## 最新活動" >> README.md
+          echo "" >> README.md
+          echo "- **最後提交：** $(git log -1 --pretty=format:'%s')" >> README.md
+          echo "- **提交者：** $(git log -1 --pretty=format:'%an')" >> README.md
+          echo "- **提交時間：** $(git log -1 --pretty=format:'%cd')" >> README.md
+          echo "" >> README.md
+      # 此步驟執行腳本來生成新的 README 內容
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          git commit -m "Docs: Auto-update README with latest activity" || echo "No changes to commit"
+          git push
+      # 此步驟將更新後的 README 提交回儲存庫
