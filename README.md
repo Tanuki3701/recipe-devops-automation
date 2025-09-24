@@ -15,3 +15,9 @@ TEST PR
 - **提交者：** Tanuki3701
 - **提交時間：** Wed Sep 24 20:48:12 2025 +0800
 
+## 最新活動
+
+- **最後提交：** Merge pull request #9 from Tanuki3701/feature/issue-8-test-link
+- **提交者：** Tanuki3701
+- **提交時間：** Wed Sep 24 21:20:12 2025 +0800
+
