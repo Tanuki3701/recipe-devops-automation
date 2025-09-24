@@ -8,3 +8,9 @@ Assignment 3:DevOps workflow for the recipe sharing platform.
 
 這個提交是為了測試 PR 連結
 
+## 最新活動
+
+- **最後提交：** feat: Create a test commit to link PR to issue #8
+- **提交者：** Tanuki3701
+- **提交時間：** Wed Sep 24 20:48:12 2025 +0800
+
