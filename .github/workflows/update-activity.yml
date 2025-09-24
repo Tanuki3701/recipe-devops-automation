@@ -1,0 +1,30 @@
+name: Update Github Activity
+# 工作流程名稱
+
+on:
+  # 設定手動觸發 (workflow_dispatch)
+  workflow_dispatch:
+  
+jobs:
+  update-activity:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write # 賦予寫入權限，以便機器人提交變更
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # 使用 actions/checkout@v4
+
+      - name: Update GitHub Activity Log
+        uses: TheDanniCraft/activity-log@v1
+        # 使用 TheDanniCraft/activity-log@v1 外部 Action
+        with:
+          # 使用你已建立的秘密變數 REPO_TOKEN
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+          # 設定要追蹤的 GitHub 用戶名
+          GITHUB_USERNAME: Tanuki3701 
+
+      # 不需要額外的提交步驟，因為 TheDanniCraft/activity-log@v1 通常會自行處理提交
+      # 此處可以移除，讓外部 Action 執行它的工作
