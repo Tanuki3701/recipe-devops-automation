@@ -1,3 +1,10 @@
+name: Update Github Activity
+# 工作流程名稱
+
+on:
+  # *** 必須有這幾行，Run 按鈕才會出現 ***
+  workflow_dispatch:
+
 jobs:
   update-activity:
     runs-on: ubuntu-latest
@@ -14,9 +21,9 @@ jobs:
           # 1. 抓取最新的提交資訊
           LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
           LATEST_AUTHOR=$(git log -1 --pretty=format:'%an')
-          LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
+          LATEST_DATE=$(git log -1 --pretty=format:'%Y-%m-%d %H:%M:%S %Z')
 
-          # 2. 格式化輸出內容
+          # 2. 格式化輸出內容為 Markdown 表格
           ACTIVITY_CONTENT=$(cat <<EOT
           | 資訊 | 內容 |
           | :--- | :--- |
@@ -34,7 +41,7 @@ jobs:
       - name: Update README Section
         uses: kevinly/section-updater@v1
         with:
-          # 將上一步生成的內容，寫入 README.md 中標記之間
+          # section_name 必須與 README.md 中的標記 () 相符
           section_name: "ACTIVITY" 
           replacement: ${{ env.ACTIVITY_CONTENT }}
           readme_file: "README.md"
