@@ -1,30 +1,48 @@
-name: Update Github Activity
-# 工作流程名稱
-
-on:
-  # 設定手動觸發 (workflow_dispatch)
-  workflow_dispatch:
-  
 jobs:
   update-activity:
     runs-on: ubuntu-latest
-    
     permissions:
-      contents: write # 賦予寫入權限，以便機器人提交變更
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        # 使用 actions/checkout@v4
 
-      - name: Update GitHub Activity Log
-        uses: TheDanniCraft/activity-log@v1
-        # 使用 TheDanniCraft/activity-log@v1 外部 Action
+      - name: Generate Activity Content
+        id: activity
+        run: |
+          # 1. 抓取最新的提交資訊
+          LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
+          LATEST_AUTHOR=$(git log -1 --pretty=format:'%an')
+          LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
+
+          # 2. 格式化輸出內容
+          ACTIVITY_CONTENT=$(cat <<EOT
+          | 資訊 | 內容 |
+          | :--- | :--- |
+          | 📜 最後提交 | **${LATEST_MESSAGE}** |
+          | 👤 提交者 | ${LATEST_AUTHOR} |
+          | ⏰ 提交時間 | ${LATEST_DATE} |
+          EOT
+          )
+          
+          # 3. 輸出到環境變數 (給下一步使用)
+          echo "ACTIVITY_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$ACTIVITY_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Update README Section
+        uses: kevinly/section-updater@v1
         with:
-          # 使用你已建立的秘密變數 REPO_TOKEN
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
-          # 設定要追蹤的 GitHub 用戶名
-          GITHUB_USERNAME: Tanuki3701 
+          # 將上一步生成的內容，寫入 README.md 中標記之間
+          section_name: "ACTIVITY" 
+          replacement: ${{ env.ACTIVITY_CONTENT }}
+          readme_file: "README.md"
 
-      # 不需要額外的提交步驟，因為 TheDanniCraft/activity-log@v1 通常會自行處理提交
-      # 此處可以移除，讓外部 Action 執行它的工作
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
+          git push
