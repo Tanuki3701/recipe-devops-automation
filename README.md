@@ -1,5 +1,13 @@
-# recipe-devops-automation 
+# My Repository
 
-Assignment 3: DevOps workflow for the recipe sharing platform.
+Some content here...
 
-## 🚀 最新活動 (Automated Activity Log) 
+<!-- BEGIN ACTIVITY -->
+| 資訊 | 內容 |
+|------|------|
+| 📜 最後提交 | **Initial commit** |
+| 👤 提交者 | Unknown |
+| ⏰ 提交時間 | 2023-01-01 00:00:00 +0000 |
+<!-- END ACTIVITY -->
+
+More content here...
