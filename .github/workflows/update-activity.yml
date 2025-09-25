@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate Activity Content
+      - name: Generate Activity Content - 名稱：生成活動內容
         id: activity
         run: |
           # 1. 抓取最新的提交資訊
@@ -32,7 +32,7 @@ jobs:
           | ⏰ 提交時間 | ${LATEST_DATE} |
           EOT
           )
-          
+
           # 3. 輸出到環境變數 (給下一步使用)
           echo "ACTIVITY_CONTENT<<EOF" >> $GITHUB_ENV
           echo "$ACTIVITY_CONTENT" >> $GITHUB_ENV
