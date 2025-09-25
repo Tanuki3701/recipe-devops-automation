@@ -2,7 +2,7 @@ name: Update Github Activity
 # 工作流程名稱
 
 on:
-  # *** 必須有這幾行，Run 按鈕才會出現 ***
+  # 確保手動觸發功能存在
   workflow_dispatch:
 
 jobs:
@@ -15,13 +15,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate Activity Content - 名稱：生成活動內容
+      - name: Generate Activity Content
         id: activity
         run: |
           # 1. 抓取最新的提交資訊
           LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
           LATEST_AUTHOR=$(git log -1 --pretty=format:'%an')
-          LATEST_DATE=$(git log -1 --pretty=format:'%Y-%m-%d %H:%M:%S %Z')
+          LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
 
           # 2. 格式化輸出內容為 Markdown 表格
           ACTIVITY_CONTENT=$(cat <<EOT
@@ -34,17 +34,28 @@ jobs:
           )
 
           # 3. 輸出到環境變數 (給下一步使用)
+          # 這裡不需要複雜的轉義，直接傳遞到下一步的腳本
           echo "ACTIVITY_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$ACTIVITY_CONTENT" >> $GITHUB_ENV
+          echo "$ACTIVITY_CONTENT" >> $GITHUB_ENVecho“ eof” >> $ github_env
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Update README Section
-        # *** 修正後的 Action 名稱：解決 'repository not found' 錯誤 ***
-        uses: kevinly/action-section-updater@v1
-        with:
-          section_name: "ACTIVITY" 
-          replacement: ${{ env.ACTIVITY_CONTENT }}
-          readme_file: "README.md"
+      - name: Update README Section (using sed)
+        env:
+          # 將上一步的內容直接傳入環境變數
+          ACTIVITY_CONTENT: ${{ steps.activity.outputs.ACTIVITY_CONTENT }}
+        run: |
+          # 由於 GITHUB_ENV 只能傳遞單一字串，我們直接使用最簡潔的 sed 腳本來替換內容
+          # 這是最穩定的替換方式，不依賴外部 Action。
+
+          # 構造替換內容 (將換行符號替換為實際的 \n，以便 sed 正確處理多行)
+          REPLACEMENT_CONTENT="$(cat <<EOT
+          ${ACTIVITY_CONTENT}
+          EOT
+          )"
+
+          # 使用 sed 腳本進行替換 (使用 # 作為分隔符，處理多行替換)
+          # 這會尋找標記之間的內容，並用格式化後的內容替換
+          sed -i -e '//{r /dev/stdin' -e 'd;}' -e '//q' README.md <<< "$REPLACEMENT_CONTENT"
 
       - name: Commit and Push Changes
         run: |
