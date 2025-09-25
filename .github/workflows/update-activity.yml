@@ -20,7 +20,7 @@ jobs:
           # 1. 抓取最新的提交資訊，添加錯誤處理
           LATEST_MESSAGE=$(git log -1 --pretty=format:'%s' 2>/dev/null || echo "No commits yet")
           LATEST_AUTHOR=$(git log -1 --pretty=format:'%an' 2>/dev/null || echo "Unknown")
-          LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || echo "N/A")
+          LATEST_DATE=$(TZ=Asia/Taipei git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || echo "N/A")
 
           # 2. 格式化輸出內容為 Markdown 表格 (包含換行符)
           ACTIVITY_CONTENT="| 資訊 | 內容 |\n| :--- | :--- |\n| 📜 最後提交 | **${LATEST_MESSAGE}** |\n| 👤 提交者 | ${LATEST_AUTHOR} |\n| ⏰ 提交時間 | ${LATEST_DATE} |"
