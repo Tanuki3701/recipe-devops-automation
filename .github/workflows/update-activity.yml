@@ -15,7 +15,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate and Insert Activity Content (Final Simple Script)
+      - name: Generate Activity Content
+        id: content
         run: |
           # 1. 抓取最新的提交資訊
           LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
@@ -23,40 +24,35 @@ jobs:
           LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
 
           # 2. 格式化輸出內容為 Markdown 表格
-          ACTIVITY_CONTENT="| 資訊 | 內容 |\n| :--- | :--- |\n| 📜 最後提交 | **${LATEST_MESSAGE}** |\n| 👤 提交者 | ${LATEST_AUTHOR} |\n| ⏰ 提交時間 | ${LATEST_DATE} |"
+          ACTIVITY_CONTENT=$(cat <<EOT
+          | 資訊 | 內容 |
+          | :--- | :--- |
+          | 📜 最後提交 | **${LATEST_MESSAGE}** |
+          | 👤 提交者 | ${LATEST_AUTHOR} |
+          | ⏰ 提交時間 | ${LATEST_DATE} |
+          EOT
+          )
 
-          # 3. 執行 SED 腳本：刪除舊內容，並插入新內容
-          # sed -i '/BEGIN_ACTIVITY/,/END_ACTIVITY/{//!d}' README.md  <-- 刪除標記之間的內容
-          # sed -i '/BEGIN_ACTIVITY/a\'"${ACTIVITY_CONTENT}" README.md  <-- 在 BEGIN 標記後插入內容
+          # 3. 將內容設為輸出變數 (給下一步使用)
+          echo "activity_log<<EOF" >> $GITHUB_OUTPUT
+          echo "$ACTIVITY_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          # 由於單一的 sed 命令在 Actions 中更穩定，我們使用一個 AWK/Bash 混合腳本
-          # 由於我們已經在步驟一清除了 README，我們只需要使用一個簡單的追加/替換邏輯。
+      - name: Update README Section (Using Stable Action)
+        # 使用一個被證實穩定的 Action 來替換標記之間的內容
+        uses: actions/github-activity-readme@v1.4.1
+        with:
+          # 設為 false，這樣它就不會自動添加它的活動內容
+          activity_log_sections: 'false'
 
-          # 我們使用一個簡單的腳本來替換 BEGIN/END 標記
-          # 這會將 BEGIN_ACTIVITY 標記到 END_ACTIVITY 標記之間的所有內容，替換成新的內容
+          # 讓它替換我們設定的標記 (我們使用 activity 區塊來替換)
+          section_name: 'activity' 
 
-          # 為了穩定性，我們將內容寫入一個臨時文件
-          {
-            echo ""
-            echo -e "${ACTIVITY_CONTENT}"
-            echo ""
-          } > temp_content.md
+          # 替換的內容使用上一步的輸出
+          content: ${{ steps.content.outputs.activity_log }}
 
-          # 讀取舊的 README，並進行替換
-          awk '
-            //{ 
-              while((getline < "temp_content.md") > 0) print 
-              next下一個
-            }
-            //{ 
-              p = 0
-              next
-            }
-            !p
-          ' README.md > README.md.new
-
-          # 將新文件替換舊文件
-          mv README.md.new README.md
+          # 因為我們不提交，我們要在下一步手動提交
+          # 這步只是替換 README 內容
 
       - name: Commit and Push Changes
         run: |
