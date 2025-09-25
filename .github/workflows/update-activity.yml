@@ -39,25 +39,22 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Update README Section (Using Final Stable Action)
-        # *** 最終修復：使用正確的 Action 擁有者和名稱 ***
-        uses: endbug/readme-section-updater@v3
+        # *** 最終修復：使用最初嘗試的 Action，但這次使用正確的名稱和版本 ***
+        uses: kevinly/section-updater@v1
         with:
-          # 這裡必須是 'section'，而不是 'section_name'
-          section: 'ACTIVITY' 
+          # 參數名稱為 section_name
+          section_name: 'ACTIVITY' 
 
-          # 替換的內容
-          content: ${{ steps.content.outputs.activity_log }}
+          # 替換的內容使用 replacement 參數 (這個 Action 的正確參數名稱)
+          replacement: ${{ steps.content.outputs.activity_log }}
 
-          # 我們需要指定要替換哪個檔案
-          target_file: 'README.md'
-
-          # 關閉自動提交，讓我們手動控制提交訊息
-          commit: false
+          # 目標檔案名稱
+          readme_file: 'README.md'
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global user.email 'github-actions[bot]@users.users.noreply.github.com'
           git add README.md
           git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
           git push
