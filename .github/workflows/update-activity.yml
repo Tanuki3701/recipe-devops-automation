@@ -15,46 +15,44 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate Activity Content
-        id: content
+      - name: Generate and Replace Activity Content (Improved AWK Script)
         run: |
           # 1. 抓取最新的提交資訊
           LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
           LATEST_AUTHOR=$(git log -1 --pretty=format:'%an')
           LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
 
-          # 2. 格式化輸出內容為 Markdown 表格
-          ACTIVITY_CONTENT=$(cat <<EOT
-          | 資訊 | 內容 |
-          | :--- | :--- |
-          | 📜 最後提交 | **${LATEST_MESSAGE}** |
-          | 👤 提交者 | ${LATEST_AUTHOR} |
-          | ⏰ 提交時間 | ${LATEST_DATE} |
-          EOT
-          )
+          # 2. 格式化輸出內容為 Markdown 表格 (包含換行符)
+          ACTIVITY_CONTENT="| 資訊 | 內容 |\n| :--- | :--- |\n| 📜 最後提交 | **${LATEST_MESSAGE}** |\n| 👤 提交者 | ${LATEST_AUTHOR} |\n| ⏰ 提交時間 | ${LATEST_DATE} |"
 
-          # 3. 將內容設為輸出變數 (給下一步使用)
-          echo "activity_log<<EOF" >> $GITHUB_OUTPUT
-          echo "$ACTIVITY_CONTENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # 3. 執行 AWK 腳本進行替換
+          # AWK 邏輯:
+          # - 遇到 <!-- BEGIN ACTIVITY --> 時，打印標記並插入新內容。
+          # - 遇到 <!-- END ACTIVITY --> 時，打印標記並結束替換。
+          # - 在標記之間的內容被忽略（避免舊表格重複）。
+          # - 其他行保持不變。
+          awk -v content="${ACTIVITY_CONTENT}" '
+            /<!-- BEGIN ACTIVITY -->/ { 
+              print $0 
+              print content 
+              p = 1 
+              next 
+            }
+            /<!-- END ACTIVITY -->/ { 
+              print $0 
+              p = 0 
+              next 
+            }
+            p == 0 { print $0 }
+          ' README.md > README.md.new
 
-      - name: Update README Section (Using Final Stable Action)
-        # *** 最終修復：使用最初嘗試的 Action，但這次使用正確的名稱和版本 ***
-        uses: kevinly/section-updater@v1
-        with:
-          # 參數名稱為 section_name
-          section_name: 'ACTIVITY' 
-
-          # 替換的內容使用 replacement 參數 (這個 Action 的正確參數名稱)
-          replacement: ${{ steps.content.outputs.activity_log }}
-
-          # 目標檔案名稱
-          readme_file: 'README.md'
+          # 替換舊檔案
+          mv README.md.new README.md
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.users.noreply.github.com'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add README.md
           git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
           git push
