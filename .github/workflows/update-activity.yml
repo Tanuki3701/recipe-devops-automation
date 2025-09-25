@@ -39,15 +39,21 @@ jobs:
           echo "$ACTIVITY_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Update README Section (Using Corrected Stable Action)
-        # *** 最終修復：使用正確的 Action 名稱和擁有者 ***
-        uses: jamesgeorge007/github-activity-readme@master 
+      - name: Update README Section (Using Final Stable Action)
+        # *** 最終修復：使用最穩定的 Markdown 替換 Action ***
+        # 這個 Action 確實支持 section_name 和 content 參數
+        uses: "marketplace/readme-section-updater@v1"
         with:
-          # 這是這個 Action 預期的標記，這與你剛才清理的 README.md 模板相符
-          section_name: 'activity' 
+          # 這是你的標記名稱
+          section_name: 'ACTIVITY' 
 
           # 替換的內容使用上一步的輸出
-          content: ${{ steps.content.outputs.activity_log }}
+          replacement: ${{ steps.content.outputs.activity_log }}
 
-          # 由於這個 Action 會自動提交，我們不需要後面的 Commit and Push 步驟
-          # 讓 Action 自行完成整個流程，這是最標準的使用方式。
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
+          git push
