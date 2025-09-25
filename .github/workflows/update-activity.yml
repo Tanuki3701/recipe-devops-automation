@@ -39,9 +39,9 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Update README Section
-        uses: kevinly/section-updater@v1
+        # *** 修正後的 Action 名稱：解決 'repository not found' 錯誤 ***
+        uses: kevinly/action-section-updater@v1
         with:
-          # section_name 必須與 README.md 中的標記 () 相符
           section_name: "ACTIVITY" 
           replacement: ${{ env.ACTIVITY_CONTENT }}
           readme_file: "README.md"
