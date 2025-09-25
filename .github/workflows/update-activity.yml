@@ -37,7 +37,7 @@ jobs:
             /<!-- END ACTIVITY -->/ { 
               print $0 
               p = 0 
-              next 下一個
+              next 
             }
             p == 0 { print $0 }
           ' README.md > README.md.new
@@ -49,12 +49,17 @@ jobs:
         run: |
           # 設定台灣時區環境變數
           export TZ=Asia/Taipei
-          # 獲取當前台灣時間作為 commit 時間戳記
-          CURRENT_TIME=$(TZ=Asia/Taipei date -d 'now' --iso-8601=seconds)
+          # 獲取當前台灣時間作為 commit 時間戳記 (使用 RFC 2822 格式)
+          CURRENT_TIME=$(TZ=Asia/Taipei date -R)
           # 強制 commit 使用台灣時間（作者和提交者時間）
           GIT_AUTHOR_DATE="$CURRENT_TIME" GIT_COMMITTER_DATE="$CURRENT_TIME" git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add README.md
-          git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
-          git push
+          # 檢查是否有變更
+          if [ -n "$(git status --porcelain)" ]; then
+            git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
+            git push
+          else
+            echo "No changes detected, skipping push."
+          fi
