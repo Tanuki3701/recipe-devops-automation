@@ -34,30 +34,20 @@ jobs:
           )
 
           # 3. 將內容設為輸出變數 (給下一步使用)
+          # 將內容導向 GITHUB_OUTPUT 供下一個 Action 讀取
           echo "activity_log<<EOF" >> $GITHUB_OUTPUT
           echo "$ACTIVITY_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Update README Section (Using Stable Action)
-        # 使用一個被證實穩定的 Action 來替換標記之間的內容
-        uses: actions/github-activity-readme@v1.4.1
+      - name: Update README Section (Using Corrected Stable Action)
+        # *** 最終修復：使用正確的 Action 名稱和擁有者 ***
+        uses: jamesgeorge007/github-activity-readme@master 
         with:
-          # 設為 false，這樣它就不會自動添加它的活動內容
-          activity_log_sections: 'false'
-
-          # 讓它替換我們設定的標記 (我們使用 activity 區塊來替換)
+          # 這是這個 Action 預期的標記，這與你剛才清理的 README.md 模板相符
           section_name: 'activity' 
 
           # 替換的內容使用上一步的輸出
           content: ${{ steps.content.outputs.activity_log }}
 
-          # 因為我們不提交，我們要在下一步手動提交
-          # 這步只是替換 README 內容
-
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add README.md
-          git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
-          git push
+          # 由於這個 Action 會自動提交，我們不需要後面的 Commit and Push 步驟
+          # 讓 Action 自行完成整個流程，這是最標準的使用方式。
