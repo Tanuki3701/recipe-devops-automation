@@ -15,42 +15,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate and Replace Activity Content (Final AWK Script)
+      - name: Generate and Insert Activity Content (Final Simple Script)
         run: |
           # 1. 抓取最新的提交資訊
           LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
           LATEST_AUTHOR=$(git log -1 --pretty=format:'%an')
           LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
 
-          # 2. 格式化輸出內容為 Markdown 表格 (包含換行符)
+          # 2. 格式化輸出內容為 Markdown 表格
           ACTIVITY_CONTENT="| 資訊 | 內容 |\n| :--- | :--- |\n| 📜 最後提交 | **${LATEST_MESSAGE}** |\n| 👤 提交者 | ${LATEST_AUTHOR} |\n| ⏰ 提交時間 | ${LATEST_DATE} |"
 
-          # 3. 執行 AWK 腳本進行替換 (最穩定的方法)
-          # AWK 腳本邏輯:
-          # - 遇到 BEGIN 標記時: 打印標記，然後打印新內容，並設定一個旗標 (p=1)。
-          # - 遇到 END 標記時: 打印標記，並關閉旗標 (p=0)。
-          # - 在旗標 p=1 期間，忽略所有行 (不打印舊內容)。
+          # 3. 執行 SED 腳本：刪除舊內容，並插入新內容
+          # sed -i '/BEGIN_ACTIVITY/,/END_ACTIVITY/{//!d}' README.md  <-- 刪除標記之間的內容
+          # sed -i '/BEGIN_ACTIVITY/a\'"${ACTIVITY_CONTENT}" README.md  <-- 在 BEGIN 標記後插入內容
+
+          # 由於單一的 sed 命令在 Actions 中更穩定，我們使用一個 AWK/Bash 混合腳本
+          # 由於我們已經在步驟一清除了 README，我們只需要使用一個簡單的追加/替換邏輯。
+
+          # 我們使用一個簡單的腳本來替換 BEGIN/END 標記
+          # 這會將 BEGIN_ACTIVITY 標記到 END_ACTIVITY 標記之間的所有內容，替換成新的內容
+
+          # 為了穩定性，我們將內容寫入一個臨時文件
+          {
+            echo ""
+            echo -e "${ACTIVITY_CONTENT}"
+            echo ""
+          } > temp_content.md
+
+          # 讀取舊的 README，並進行替換
           awk '
-            BEGIN { 
-              content = "'"${ACTIVITY_CONTENT}"'" 
-              gsub(/\\n/, "\n", content) 
-              p = 0 
+            //{ 
+              while((getline < "temp_content.md") > 0) print 
+              next下一個
             }
-            // { 
-              print $0 
-              print content 
-              p = 1 
-              next 
+            //{ 
+              p = 0
+              next
             }
-            // { 
-              print $0 
-              p = 0 
-              next 
-            }
-            p == 0
+            !p
           ' README.md > README.md.new
 
-          # 替換舊檔案
+          # 將新文件替換舊文件
           mv README.md.new README.md
 
       - name: Commit and Push Changes
