@@ -34,21 +34,25 @@ jobs:
           )
 
           # 3. 將內容設為輸出變數 (給下一步使用)
-          # 將內容導向 GITHUB_OUTPUT 供下一個 Action 讀取
           echo "activity_log<<EOF" >> $GITHUB_OUTPUT
           echo "$ACTIVITY_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Update README Section (Using Final Stable Action)
-        # *** 最終修復：使用最穩定的 Markdown 替換 Action ***
-        # 這個 Action 確實支持 section_name 和 content 參數
-        uses: "marketplace/readme-section-updater@v1"
+        # *** 最終修復：使用正確的 Action 擁有者和名稱 ***
+        uses: endbug/readme-section-updater@v3
         with:
-          # 這是你的標記名稱
-          section_name: 'ACTIVITY' 
+          # 這裡必須是 'section'，而不是 'section_name'
+          section: 'ACTIVITY' 
 
-          # 替換的內容使用上一步的輸出
-          replacement: ${{ steps.content.outputs.activity_log }}
+          # 替換的內容
+          content: ${{ steps.content.outputs.activity_log }}
+
+          # 我們需要指定要替換哪個檔案
+          target_file: 'README.md'
+
+          # 關閉自動提交，讓我們手動控制提交訊息
+          commit: false
 
       - name: Commit and Push Changes
         run: |
