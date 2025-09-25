@@ -17,21 +17,17 @@ jobs:
 
       - name: Generate and Replace Activity Content (Improved AWK Script)
         run: |
-          # 1. 抓取最新的提交資訊
-          LATEST_MESSAGE=$(git log -1 --pretty=format:'%s')
-          LATEST_AUTHOR=$(git log -1 --pretty=format:'%an')
-          LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z')
+          # 1. 抓取最新的提交資訊，添加錯誤處理
+          LATEST_MESSAGE=$(git log -1 --pretty=format:'%s' 2>/dev/null || echo "No commits yet")
+          LATEST_AUTHOR=$(git log -1 --pretty=format:'%an' 2>/dev/null || echo "Unknown")
+          LATEST_DATE=$(git log -1 --pretty=format:'%ad' --date=format:'%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || echo "N/A")
 
           # 2. 格式化輸出內容為 Markdown 表格 (包含換行符)
           ACTIVITY_CONTENT="| 資訊 | 內容 |\n| :--- | :--- |\n| 📜 最後提交 | **${LATEST_MESSAGE}** |\n| 👤 提交者 | ${LATEST_AUTHOR} |\n| ⏰ 提交時間 | ${LATEST_DATE} |"
 
           # 3. 執行 AWK 腳本進行替換
-          # AWK 邏輯:
-          # - 遇到 <!-- BEGIN ACTIVITY --> 時，打印標記並插入新內容。
-          # - 遇到 <!-- END ACTIVITY --> 時，打印標記並結束替換。
-          # - 在標記之間的內容被忽略（避免舊表格重複）。
-          # - 其他行保持不變。
           awk -v content="${ACTIVITY_CONTENT}" '
+            BEGIN { p = 0 }
             /<!-- BEGIN ACTIVITY -->/ { 
               print $0 
               print content 
@@ -55,4 +51,5 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add README.md
           git commit -m "Docs: Auto-update README with latest commit info" || echo "No changes to commit"
+          git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
           git push
